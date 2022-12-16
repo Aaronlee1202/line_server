@@ -2,11 +2,11 @@ import { Sequelize } from "sequelize";
 
 //初始化MySQL連線
 export const sequelize = new Sequelize({
-    host: "smartbus-mysql.mysql.database.azure.com",
-    database: "smartbus",
+    host: "chargecloud-mysql.mysql.database.azure.com",
+    database: "chargingcloud",
     dialect: "mysql",
-    username: "root",
-    password: 'root',
+    username: "chargingcloud@chargecloud-mysql",
+    password: 'PretsoCC4Eyes',
     pool: {
       max: 5,
       min: 0,

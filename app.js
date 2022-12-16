@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import lineNotifyRouter from "./routes/line-notify.js";
 import indexRouter from "./routes/index.js";
+import "./db/index.js";
 
 const app = express();
 app.use(cors("*"));
