@@ -3,45 +3,36 @@ import axios from "axios";
 import qs from "qs";
 const router = express.Router();
 
-var redirect_URL = "https://d45f-118-163-94-193.ngrok.io";
+var redirect_URL = "https://3c48-118-163-94-193.ngrok.io/";
+var lineBot_URL = "https://notify-bot.line.me";
+var lineApi_URL = "https://notify-api.line.me";
 
 let data = {
   grant_type: "authorization_code",
   code: "",
-  redirect_uri: `${redirect_URL}/v1/getCode`,
+  redirect_uri: `${redirect_URL}`,
   client_id: "pUWtbhwF8uF8KIvRZC17A1",
   client_secret: "i7H83T9nXXxlEzekLAjIxlTmAIaDywmL5rnUNLUXgBV",
 };
-let token = [
-  "QTRIM3gr3309dR57XaYeewtLecCmeaEvdywAgodForp",
-  "Sfzo4qODHPDqEewyMDzQ1LBXwPoPHpe2CSc4QG0xeVH",
-  "ZhTS48ow0EhbV7LLif4vlaX24DAqzi1JMdvtgHm0eMm",
-];
-
+// Users Token
+let token = { aaron: "sI1LxakQ3M5BXk22a5yV9KwngTZxzvrJ5LTAWcuN2VJ" };
 
 router.get("/login/line_notify", function (req, res, next) {
-  console.log("user get /redirect");
-  const state = "state";
+  console.log("line_notify");
+  const { tag } = req.query;
   res.redirect(
-    `https://notify-bot.line.me/oauth/authorize?response_type=code&client_id=pUWtbhwF8uF8KIvRZC17A1&redirect_uri=${redirect_URL}/v1/getCode&scope=notify&state=${state}`
+    `${lineBot_URL}/oauth/authorize?response_type=code&client_id=pUWtbhwF8uF8KIvRZC17A1&redirect_uri=${redirect_URL}&scope=notify&state=${tag}`
   );
 });
 
-router.get("/getCode", function (req, res, next) {
-  console.log("get code");
-  console.log(req.query);
-  data.code = req.query.code;
-  res.redirect(`${redirect_URL}/v1/callback`);
-});
-
 router.get("/callback", async function (req, res, next) {
-  console.log("user get /callback");
-  console.log(data);
-  res.send("this is callback");
-  //   data.code = req.query.code;
+  console.log("/callback");
+  const { code, tag } = req.query;
+  data.code = code;
+  console.log("code:", code, "tag:", tag);
   try {
     const oauthToken = await axios.post(
-      `https://notify-bot.line.me/oauth/token`,
+      `${lineBot_URL}/oauth/token`,
       qs.stringify(data),
       {
         headers: {
@@ -49,8 +40,10 @@ router.get("/callback", async function (req, res, next) {
         },
       }
     );
-    console.log("oauthToken", oauthToken.data);
-    token.push(oauthToken.data.access_token);
+    token[tag] = oauthToken.data.access_token;
+    console.log("token:", token);
+
+    res.send("this is callback");
     return null;
   } catch (e) {
     console.log(e);
@@ -61,16 +54,16 @@ router.get("/emitNotify", async function (req, res, next) {
   let text = req.query.text || "No Data";
   try {
     const status = await axios.post(
-      "https://notify-api.line.me/api/notify",
+      `${lineApi_URL}/api/notify`,
       { message: text },
       {
         headers: {
-          Authorization: `Bearer ${token[0]}`,
+          Authorization: `Bearer ${token.aaron}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
       }
     );
-    console.log("system emit Notify", status);
+    console.log("system emit Notify", status.status);
     res.send("success emit !!!");
   } catch (e) {
     console.log(e);
@@ -79,16 +72,12 @@ router.get("/emitNotify", async function (req, res, next) {
 
 router.get("/revoke", async function (req, res, next) {
   try {
-    const status = await axios.post(
-      "https://notify-api.line.me/api/revoke",
-      null,
-      {
-        headers: {
-          Authorization: `Bearer ${token[1]}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      }
-    );
+    const status = await axios.post(`${lineApi_URL}/api/revoke`, null, {
+      headers: {
+        Authorization: `Bearer ${token[3]}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
     console.log("revoke status", status);
     res.redirect(`${redirect_URL}`);
   } catch (e) {
